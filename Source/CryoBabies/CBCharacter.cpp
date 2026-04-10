@@ -4,7 +4,6 @@
 #include "CBCharacter.h"
 
 #include "Camera/CameraComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 
 
 // Sets default values
