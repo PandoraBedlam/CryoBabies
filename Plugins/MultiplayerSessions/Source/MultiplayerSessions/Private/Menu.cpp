@@ -113,14 +113,35 @@ void UMenu::OnFindSessions(const TArray<FOnlineSessionSearchResult>& SessionResu
 			return;
 		}
 	}
-	if (!bWasSuccessful || SessionResults.Num() == 0)
+	if (GEngine)
 	{
-		JoinButton->SetIsEnabled(true);
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			15.f,
+			FColor::Red,
+			FString::Printf(TEXT("No sessions found matching type: %s (searched %d results)"), *MatchType, SessionResults.Num())
+		);
 	}
+	JoinButton->SetIsEnabled(true);
 }
 
 void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 {
+	if (Result != EOnJoinSessionCompleteResult::Success)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.f,
+				FColor::Red,
+				FString::Printf(TEXT("Failed to join session! Result: %d"), static_cast<int32>(Result))
+			);
+		}
+		JoinButton->SetIsEnabled(true);
+		return;
+	}
+
 	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
 	if (Subsystem)
 	{
@@ -130,6 +151,20 @@ void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 			FString Address;
 			SessionInterface->GetResolvedConnectString(NAME_GameSession, Address);
 
+			if (Address.IsEmpty())
+			{
+				if (GEngine)
+				{
+					GEngine->AddOnScreenDebugMessage(
+						-1,
+						15.f,
+						FColor::Red,
+						FString(TEXT("Failed to resolve connect string!"))
+					);
+				}
+				JoinButton->SetIsEnabled(true);
+				return;
+			}
 			APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
 			if (PlayerController)
 			{
