@@ -4,6 +4,7 @@
 #include "Components/InputComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Net/VoiceConfig.h"
 
 ACBCharacter::ACBCharacter()
 {
@@ -12,13 +13,32 @@ ACBCharacter::ACBCharacter()
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
 	CameraComponent->SetupAttachment(GetMesh());
 	CameraComponent->bUsePawnControlRotation = true;
+
+	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
+	VOIPTalker->SetIsReplicated(true);
+}
+
+void ACBCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
+void ACBCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACBCharacter::Look);
+		EnhancedInputComponent->BindAction(MovementAction, ETriggerEvent::Triggered, this, &ACBCharacter::Move);
+	}
 }
 
 void ACBCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-
+	// Input
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = 
@@ -27,6 +47,9 @@ void ACBCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultInputMapping, 0);
 		}
 	}
+
+	// VOIP
+	if (GetPlayerState()) SetupVOIP();
 }
 
 void ACBCharacter::Look(const FInputActionValue& Value)
@@ -47,19 +70,22 @@ void ACBCharacter::Move(const FInputActionValue& Value)
 	AddMovementInput(Right, MovementVector.X);
 }
 
-void ACBCharacter::Tick(float DeltaTime)
+void ACBCharacter::SetupVOIP()
 {
-	Super::Tick(DeltaTime);
-}
+	APlayerState* LocalPlayerState = GetPlayerState();
 
-void ACBCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	//UVOIPTalker* VOIPTalker = UVOIPTalker::CreateTalkerForPlayer(LocalPlayerState);
 
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	if (VOIPTalker)
 	{
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACBCharacter::Look);
-		EnhancedInputComponent->BindAction(MovementAction, ETriggerEvent::Triggered, this, &ACBCharacter::Move);
+		VOIPTalker->RegisterWithPlayerState(LocalPlayerState);
 	}
-}
 
+	FVoiceSettings VoiceSettings;
+
+	if (AttenuationSettings) VoiceSettings.AttenuationSettings = AttenuationSettings;
+	if (SourceEffectChain) VoiceSettings.SourceEffectChain = SourceEffectChain;
+	VoiceSettings.ComponentToAttachTo = CameraComponent;
+
+	VOIPTalker->Settings = VoiceSettings;
+}
