@@ -49,7 +49,7 @@ void ACBCharacter::BeginPlay()
 	}
 
 	// VOIP
-	if (GetPlayerState()) SetupVOIP();
+	if (GetPlayerState() && IsLocallyControlled()) SetupVOIP();
 }
 
 void ACBCharacter::Look(const FInputActionValue& Value)
