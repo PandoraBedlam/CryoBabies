@@ -16,8 +16,8 @@ class CRYOBABIES_API ACBCharacter : public ACharacter
 	UPROPERTY(EditDefaultsOnly, Category="Camera")
 	class UCameraComponent* CameraComponent;
 
-	UPROPERTY(EditDefaultsOnly, Category = VOIP)
-	class UVOIPTalker* VOIPTalker;
+	//UPROPERTY(EditDefaultsOnly, Category = VOIP)
+	//class UVOIPTalker* VOIPTalker;
 
 public:
 	ACBCharacter();
@@ -44,10 +44,18 @@ private:
 	void Move(const FInputActionValue& Value);
 
 	// Voice Chat
-	void SetupVOIP();
+	//void SetupVOIP();
 
 public:
+	UFUNCTION(Server, Reliable)
+	void RequestSetupVOIPRPC(ACBCharacter* character);
+	UFUNCTION(NetMulticast, Reliable)
+	void SetupVOIPRPC(ACBCharacter* character);
+
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	USoundAttenuation* GetAttenuationSettings() const { return AttenuationSettings; }
+	USoundEffectSourcePresetChain* GetSourceEffectChain() const { return SourceEffectChain; }
 };

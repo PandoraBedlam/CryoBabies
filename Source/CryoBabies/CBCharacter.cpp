@@ -14,22 +14,22 @@ ACBCharacter::ACBCharacter()
 	CameraComponent->SetupAttachment(GetMesh());
 	CameraComponent->bUsePawnControlRotation = true;
 
-	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
-	VOIPTalker->SetIsReplicated(true);
+	//VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
+	//VOIPTalker->SetIsReplicated(true);
 }
 
 void ACBCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (GEngine)
-	{
-		if (VOIPTalker)
-		{
-			float VoiceLevel = VOIPTalker->GetVoiceLevel();
-			GEngine->AddOnScreenDebugMessage(-1, DeltaTime, FColor::Green, FString::Printf(TEXT("Voice level: %f"), VoiceLevel));
-		}
-	}
+	//if (GEngine)
+	//{
+	//	if (VOIPTalker)
+	//	{
+	//		float VoiceLevel = VOIPTalker->GetVoiceLevel();
+	//		GEngine->AddOnScreenDebugMessage(-1, DeltaTime, FColor::Green, FString::Printf(TEXT("Voice level: %f"), VoiceLevel));
+	//	}
+	//}
 }
 
 void ACBCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -58,7 +58,9 @@ void ACBCharacter::BeginPlay()
 	}
 
 	// VOIP
-	if (GetPlayerState() /* && IsLocallyControlled()*/) SetupVOIP();
+	//if (GetPlayerState() /* && IsLocallyControlled()*/) SetupVOIP();
+
+	if (GetPlayerState() && IsLocallyControlled()) RequestSetupVOIPRPC(this);
 }
 
 void ACBCharacter::Look(const FInputActionValue& Value)
@@ -79,22 +81,61 @@ void ACBCharacter::Move(const FInputActionValue& Value)
 	AddMovementInput(Right, MovementVector.X);
 }
 
-void ACBCharacter::SetupVOIP()
+void ACBCharacter::RequestSetupVOIPRPC_Implementation(ACBCharacter* character)
 {
-	APlayerState* LocalPlayerState = GetPlayerState();
+	SetupVOIPRPC(character);
+}
 
-	//VOIPTalker = UVOIPTalker::CreateTalkerForPlayer(LocalPlayerState);
+void ACBCharacter::SetupVOIPRPC_Implementation(ACBCharacter* character)
+{
+	APlayerState* player = character->GetPlayerState();
+
+	UVOIPTalker* VOIPTalker = UVOIPTalker::CreateTalkerForPlayer(player);
 
 	if (VOIPTalker)
 	{
-		VOIPTalker->RegisterWithPlayerState(LocalPlayerState);
+		USoundAttenuation* ClientAttenuationSettings = character->GetAttenuationSettings();
+		if (ClientAttenuationSettings) VOIPTalker->Settings.AttenuationSettings = ClientAttenuationSettings;
+		USoundEffectSourcePresetChain* ClientSourceEffectChain = character->GetSourceEffectChain();
+		if (ClientSourceEffectChain) VOIPTalker->Settings.SourceEffectChain = ClientSourceEffectChain;
+		VOIPTalker->Settings.ComponentToAttachTo = character->GetRootComponent();
+
+		VOIPTalker->RegisterWithPlayerState(player);
 	}
-
-	FVoiceSettings VoiceSettings;
-
-	if (AttenuationSettings) VoiceSettings.AttenuationSettings = AttenuationSettings;
-	if (SourceEffectChain) VoiceSettings.SourceEffectChain = SourceEffectChain;
-	//VoiceSettings.ComponentToAttachTo = RootComponent;
-
-	VOIPTalker->Settings = VoiceSettings;
 }
+
+//void ACBCharacter::SetupVOIP()
+//{
+//	APlayerState* LocalPlayerState = GetPlayerState();
+//
+//	//VOIPTalker = UVOIPTalker::CreateTalkerForPlayer(LocalPlayerState);
+//
+//	if (VOIPTalker)
+//	{
+//		VOIPTalker->RegisterWithPlayerState(LocalPlayerState);
+//	}
+//
+//	FVoiceSettings VoiceSettings;
+//
+//	if (AttenuationSettings) VoiceSettings.AttenuationSettings = AttenuationSettings;
+//	if (SourceEffectChain) VoiceSettings.SourceEffectChain = SourceEffectChain;
+//	VoiceSettings.ComponentToAttachTo = RootComponent;
+//
+//	VOIPTalker->Settings = VoiceSettings;
+//}
+
+//void ACBCharacter::SetupVOIP()
+//{
+//	APlayerState* LocalPlayerState = GetPlayerState();
+//
+//	VOIPTalker = UVOIPTalker::CreateTalkerForPlayer(LocalPlayerState);
+//
+//	if (VOIPTalker)
+//	{
+//		if (AttenuationSettings) VOIPTalker->Settings.AttenuationSettings = AttenuationSettings;
+//		if (SourceEffectChain) VOIPTalker->Settings.SourceEffectChain = SourceEffectChain;
+//		VOIPTalker->Settings.ComponentToAttachTo = RootComponent;
+//
+//		VOIPTalker->RegisterWithPlayerState(LocalPlayerState);
+//	}
+//}
