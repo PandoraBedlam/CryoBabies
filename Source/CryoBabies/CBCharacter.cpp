@@ -94,13 +94,21 @@ void ACBCharacter::SetupVOIPRPC_Implementation(ACBCharacter* character)
 
 	if (VOIPTalker)
 	{
-		USoundAttenuation* ClientAttenuationSettings = character->GetAttenuationSettings();
-		if (ClientAttenuationSettings) VOIPTalker->Settings.AttenuationSettings = ClientAttenuationSettings;
-		USoundEffectSourcePresetChain* ClientSourceEffectChain = character->GetSourceEffectChain();
-		if (ClientSourceEffectChain) VOIPTalker->Settings.SourceEffectChain = ClientSourceEffectChain;
+		VOIPTalker->RegisterWithPlayerState(player);
+
 		VOIPTalker->Settings.ComponentToAttachTo = character->GetRootComponent();
 
-		VOIPTalker->RegisterWithPlayerState(player);
+		USoundAttenuation* ClientAttenuationSettings = character->GetAttenuationSettings();
+		if (ClientAttenuationSettings)
+		{
+			VOIPTalker->Settings.AttenuationSettings = ClientAttenuationSettings;
+		}
+
+		USoundEffectSourcePresetChain* ClientSourceEffectChain = character->GetSourceEffectChain();
+		if (ClientSourceEffectChain)
+		{
+			VOIPTalker->Settings.SourceEffectChain = ClientSourceEffectChain;
+		}
 	}
 }
 
