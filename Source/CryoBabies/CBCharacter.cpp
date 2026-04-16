@@ -2,9 +2,11 @@
 
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Net/VoiceConfig.h"
+#include "Net/UnrealNetwork.h"
 
 ACBCharacter::ACBCharacter()
 {
@@ -13,6 +15,7 @@ ACBCharacter::ACBCharacter()
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
 	CameraComponent->SetupAttachment(GetMesh());
 	CameraComponent->bUsePawnControlRotation = true;
+	//CameraComponent->AddRelativeLocation(FVector(0.0f, 0.0f, -CameraHeightCrouching));
 
 	//VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 	//VOIPTalker->SetIsReplicated(true);
@@ -40,7 +43,22 @@ void ACBCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	{
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACBCharacter::Look);
 		EnhancedInputComponent->BindAction(MovementAction, ETriggerEvent::Triggered, this, &ACBCharacter::Move);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ACBCharacter::ActivateSprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ACBCharacter::DeactivateSprint);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ACBCharacter::ActivateCrouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ACBCharacter::DeactivateCrouch);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACBCharacter::Jump);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ACBCharacter::ActivateInteract);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ACBCharacter::DeactivateInteract);
 	}
+}
+
+void ACBCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACBCharacter, bIsCrouching);
+	DOREPLIFETIME(ACBCharacter, bIsInteracting);
 }
 
 void ACBCharacter::BeginPlay()
@@ -79,6 +97,51 @@ void ACBCharacter::Move(const FInputActionValue& Value)
 	AddMovementInput(Forward, MovementVector.Y);
 	const FVector Right = GetActorRightVector();
 	AddMovementInput(Right, MovementVector.X);
+}
+
+void ACBCharacter::ActivateSprint(const FInputActionValue& Value)
+{
+	UnCrouch(true);
+	bIsCrouching = false;
+
+	bIsSprinting = true;
+	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+}
+
+void ACBCharacter::DeactivateSprint(const FInputActionValue& Value)
+{
+	bIsSprinting = false;
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+}
+
+void ACBCharacter::ActivateCrouch(const FInputActionValue& Value)
+{
+	bIsSprinting = false;
+
+	Crouch(true);
+	bIsCrouching = true;
+	GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
+
+	CameraComponent->AddRelativeLocation(CameraOffsetCrouching);
+}
+
+void ACBCharacter::DeactivateCrouch(const FInputActionValue& Value)
+{
+	UnCrouch(true);
+	bIsCrouching = false;
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+
+	CameraComponent->AddRelativeLocation(-CameraOffsetCrouching);
+}
+
+void ACBCharacter::ActivateInteract(const FInputActionValue& Value)
+{
+	bIsInteracting = true;
+}
+
+void ACBCharacter::DeactivateInteract(const FInputActionValue& Value)
+{
+	bIsInteracting = false;
 }
 
 void ACBCharacter::RequestSetupVOIPRPC_Implementation(ACBCharacter* character)
