@@ -20,9 +20,8 @@ ACBCharacter::ACBCharacter()
 	//CameraComponent->AddRelativeLocation(FVector(0.0f, 0.0f, -CameraHeightCrouching));
 
 	OverlapSphereComponent = CreateDefaultSubobject<USphereComponent>("SphereOverlapComp");
-	OverlapSphereComponent->SetupAttachment(GetMesh());
-	OverlapSphereComponent->InitSphereRadius(OverlapSphereRadius);
-	OverlapSphereComponent->SetCollisionProfileName("Interactable");
+	OverlapSphereComponent->SetupAttachment(RootComponent);
+	OverlapSphereComponent->SetCollisionProfileName("InteractorSphere");
 
 	//VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 	//VOIPTalker->SetIsReplicated(true);
@@ -66,7 +65,6 @@ void ACBCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 	DOREPLIFETIME(ACBCharacter, bIsCrouching);
 	DOREPLIFETIME(ACBCharacter, bIsInteracting);
-	DOREPLIFETIME(ACBCharacter, m_OverlappedInteractable);
 }
 
 void ACBCharacter::BeginPlay()
@@ -95,19 +93,17 @@ void ACBCharacter::BeginPlay()
 void ACBCharacter::OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
 	class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if(OtherActor && OtherActor != this)
+	if (OtherActor && OtherActor != this
+		&& OtherActor->GetClass()->ImplementsInterface(UIInteractable::StaticClass()))
 	{
-		if(auto* CollidedActor = Cast<IIInteractable>(OtherActor)) //does it implement IInteractable?
-		{
-			m_OverlappedInteractable = OtherActor;
-		}
+		m_OverlappedInteractable = OtherActor;
 	}
 }
 
 void ACBCharacter::OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
 	class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if(OtherActor && OtherActor != this)
+	if (OtherActor == m_OverlappedInteractable)
 	{
 		m_OverlappedInteractable = nullptr;
 	}
@@ -172,12 +168,10 @@ void ACBCharacter::ActivateInteract(const FInputActionValue& Value)
 
 	if(HasAuthority())
 	{
-		if(m_OverlappedInteractable)
+		if (m_OverlappedInteractable
+			&& m_OverlappedInteractable->GetClass()->ImplementsInterface(UIInteractable::StaticClass()))
 		{
-			if(auto* Interactable = Cast<IIInteractable>(m_OverlappedInteractable))
-			{
-				Interactable->Interact(true);
-			}
+			IIInteractable::Execute_Interact(m_OverlappedInteractable, true);
 		}
 	}
 	else
@@ -192,12 +186,10 @@ void ACBCharacter::DeactivateInteract(const FInputActionValue& Value)
 
 	if(HasAuthority())
 	{
-		if(m_OverlappedInteractable)
+		if (m_OverlappedInteractable
+			&& m_OverlappedInteractable->GetClass()->ImplementsInterface(UIInteractable::StaticClass()))
 		{
-			if(auto* Interactable = Cast<IIInteractable>(m_OverlappedInteractable))
-			{
-				Interactable->Interact(false);
-			}
+			IIInteractable::Execute_Interact(m_OverlappedInteractable, false);
 		}
 	}
 	else
@@ -208,23 +200,19 @@ void ACBCharacter::DeactivateInteract(const FInputActionValue& Value)
 
 void ACBCharacter::ServerInteractButtonPressed_Implementation()
 {
-	if(m_OverlappedInteractable)
+	if (m_OverlappedInteractable
+		&& m_OverlappedInteractable->GetClass()->ImplementsInterface(UIInteractable::StaticClass()))
 	{
-		if(auto* Interactable = Cast<IIInteractable>(m_OverlappedInteractable))
-		{
-			Interactable->Interact(true);
-		}
+		IIInteractable::Execute_Interact(m_OverlappedInteractable, true);
 	}
 }
 
 void ACBCharacter::ServerInteractButtonReleased_Implementation()
 {
-	if(m_OverlappedInteractable)
+	if (m_OverlappedInteractable
+			&& m_OverlappedInteractable->GetClass()->ImplementsInterface(UIInteractable::StaticClass()))
 	{
-		if(auto* Interactable = Cast<IIInteractable>(m_OverlappedInteractable))
-		{
-			Interactable->Interact(false);
-		}
+		IIInteractable::Execute_Interact(m_OverlappedInteractable, false);
 	}
 }
 

@@ -54,7 +54,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category ="Properties")
 	float OverlapSphereRadius = 100.0f;
 
-	UPROPERTY(VisibleAnywhere, Replicated)
+	UPROPERTY(VisibleAnywhere)
 	AActor* m_OverlappedInteractable = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, Category = Camera)

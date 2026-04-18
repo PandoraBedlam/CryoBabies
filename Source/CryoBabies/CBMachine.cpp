@@ -16,7 +16,7 @@ ACBMachine::ACBMachine()
 
 	MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>("MeshComp");
 	RootComponent = MeshComp;
-	MeshComp->SetCollisionProfileName("Interactable");	
+	MeshComp->SetCollisionProfileName("InteractableObject");	
 }
 
 // Called when the game starts or when spawned
