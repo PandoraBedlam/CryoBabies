@@ -22,6 +22,7 @@ ACBCharacter::ACBCharacter()
 	OverlapSphereComponent = CreateDefaultSubobject<USphereComponent>("SphereOverlapComp");
 	OverlapSphereComponent->SetupAttachment(RootComponent);
 	OverlapSphereComponent->SetCollisionProfileName("InteractorSphere");
+	OverlapSphereComponent->SetGenerateOverlapEvents(true);
 
 	//VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 	//VOIPTalker->SetIsReplicated(true);

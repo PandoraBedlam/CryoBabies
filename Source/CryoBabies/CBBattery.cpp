@@ -12,9 +12,14 @@ ACBBattery::ACBBattery()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	bReplicates = true;
+
 	ChargePercentage = (ChargeAmount/MaxChargeAmount)*100.f;
 
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("MeshComponent");
+	RootComponent = MeshComponent;
+	MeshComponent->SetCollisionProfileName("InteractableObject");
+	MeshComponent->SetGenerateOverlapEvents(true);
 }
 
 // Called when the game starts or when spawned
