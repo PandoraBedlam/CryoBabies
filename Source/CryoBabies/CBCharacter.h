@@ -16,6 +16,9 @@ class CRYOBABIES_API ACBCharacter : public ACharacter
 	UPROPERTY(EditDefaultsOnly, Category="Camera")
 	class UCameraComponent* CameraComponent;
 
+	UPROPERTY(EditDefaultsOnly, Category="Properties")
+	class USphereComponent* OverlapSphereComponent;
+
 	//UPROPERTY(EditDefaultsOnly, Category = VOIP)
 	//class UVOIPTalker* VOIPTalker;
 
@@ -48,6 +51,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = Movement)
 	float CrouchSpeed = 200.0f;
 
+	UPROPERTY(EditDefaultsOnly, Category ="Properties")
+	float OverlapSphereRadius = 100.0f;
+
+	UPROPERTY(VisibleAnywhere, Replicated)
+	AActor* m_OverlappedInteractable = nullptr;
+
 	UPROPERTY(EditDefaultsOnly, Category = Camera)
 	FVector CameraOffsetCrouching = FVector(0.0f, 0.0f, -75.0f);
 
@@ -67,6 +76,12 @@ private:
 	void ActivateInteract(const FInputActionValue& Value);
 	void DeactivateInteract(const FInputActionValue& Value);
 
+	UFUNCTION(Server, Reliable)
+	void ServerInteractButtonPressed();
+
+	UFUNCTION(Server, Reliable)
+	void ServerInteractButtonReleased();
+
 	// Voice Chat
 	//void SetupVOIP();
 
@@ -81,6 +96,12 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION()
+	void OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	USoundAttenuation* GetAttenuationSettings() const { return AttenuationSettings; }
 	USoundEffectSourcePresetChain* GetSourceEffectChain() const { return SourceEffectChain; }

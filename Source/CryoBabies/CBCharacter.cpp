@@ -5,6 +5,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "IInteractable.h"
+#include "Components/SphereComponent.h"
 #include "Net/VoiceConfig.h"
 #include "Net/UnrealNetwork.h"
 
@@ -16,6 +18,11 @@ ACBCharacter::ACBCharacter()
 	CameraComponent->SetupAttachment(GetMesh());
 	CameraComponent->bUsePawnControlRotation = true;
 	//CameraComponent->AddRelativeLocation(FVector(0.0f, 0.0f, -CameraHeightCrouching));
+
+	OverlapSphereComponent = CreateDefaultSubobject<USphereComponent>("SphereOverlapComp");
+	OverlapSphereComponent->SetupAttachment(GetMesh());
+	OverlapSphereComponent->InitSphereRadius(OverlapSphereRadius);
+	OverlapSphereComponent->SetCollisionProfileName("Interactable");
 
 	//VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 	//VOIPTalker->SetIsReplicated(true);
@@ -59,6 +66,7 @@ void ACBCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 	DOREPLIFETIME(ACBCharacter, bIsCrouching);
 	DOREPLIFETIME(ACBCharacter, bIsInteracting);
+	DOREPLIFETIME(ACBCharacter, m_OverlappedInteractable);
 }
 
 void ACBCharacter::BeginPlay()
@@ -79,6 +87,30 @@ void ACBCharacter::BeginPlay()
 	//if (GetPlayerState() /* && IsLocallyControlled()*/) SetupVOIP();
 
 	if (GetPlayerState() && IsLocallyControlled()) RequestSetupVOIPRPC(this);
+
+	OverlapSphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ACBCharacter::OnOverlapBegin);
+	OverlapSphereComponent->OnComponentEndOverlap.AddDynamic(this, &ACBCharacter::OnOverlapEnd);
+}
+
+void ACBCharacter::OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
+	class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if(OtherActor && OtherActor != this)
+	{
+		if(auto* CollidedActor = Cast<IIInteractable>(OtherActor)) //does it implement IInteractable?
+		{
+			m_OverlappedInteractable = OtherActor;
+		}
+	}
+}
+
+void ACBCharacter::OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
+	class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if(OtherActor && OtherActor != this)
+	{
+		m_OverlappedInteractable = nullptr;
+	}
 }
 
 void ACBCharacter::Look(const FInputActionValue& Value)
@@ -137,11 +169,63 @@ void ACBCharacter::DeactivateCrouch(const FInputActionValue& Value)
 void ACBCharacter::ActivateInteract(const FInputActionValue& Value)
 {
 	bIsInteracting = true;
+
+	if(HasAuthority())
+	{
+		if(m_OverlappedInteractable)
+		{
+			if(auto* Interactable = Cast<IIInteractable>(m_OverlappedInteractable))
+			{
+				Interactable->Interact(true);
+			}
+		}
+	}
+	else
+	{
+		ServerInteractButtonPressed();
+	}
 }
 
 void ACBCharacter::DeactivateInteract(const FInputActionValue& Value)
 {
 	bIsInteracting = false;
+
+	if(HasAuthority())
+	{
+		if(m_OverlappedInteractable)
+		{
+			if(auto* Interactable = Cast<IIInteractable>(m_OverlappedInteractable))
+			{
+				Interactable->Interact(false);
+			}
+		}
+	}
+	else
+	{
+		ServerInteractButtonReleased();
+	}
+}
+
+void ACBCharacter::ServerInteractButtonPressed_Implementation()
+{
+	if(m_OverlappedInteractable)
+	{
+		if(auto* Interactable = Cast<IIInteractable>(m_OverlappedInteractable))
+		{
+			Interactable->Interact(true);
+		}
+	}
+}
+
+void ACBCharacter::ServerInteractButtonReleased_Implementation()
+{
+	if(m_OverlappedInteractable)
+	{
+		if(auto* Interactable = Cast<IIInteractable>(m_OverlappedInteractable))
+		{
+			Interactable->Interact(false);
+		}
+	}
 }
 
 void ACBCharacter::RequestSetupVOIPRPC_Implementation(ACBCharacter* character)

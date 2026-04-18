@@ -3,11 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "IInteractable.h"
 #include "GameFramework/Actor.h"
 #include "CBMachine.generated.h"
 
-UCLASS(Abstract)
-class CRYOBABIES_API ACBMachine : public AActor
+UCLASS()
+class CRYOBABIES_API ACBMachine : public AActor, public IIInteractable
 {
 	GENERATED_BODY()
 
@@ -15,7 +16,7 @@ public:
 	// Sets default values for this actor's properties
 	ACBMachine();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Machine | Visuals")
+	UPROPERTY(EditDefaultsOnly, Category = "Machine | Visuals")
 	USkeletalMeshComponent* MeshComp;
 
 	//'Current charge' depletes as time goes by
@@ -37,6 +38,10 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	FTimerHandle TimerHandle_DepletionTimer;
+
+	void Timer_ApplyDepletion();
 
 public:
 	// Called every frame

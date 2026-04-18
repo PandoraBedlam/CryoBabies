@@ -16,14 +16,15 @@ ACBMachine::ACBMachine()
 
 	MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>("MeshComp");
 	RootComponent = MeshComp;
-	
+	MeshComp->SetCollisionProfileName("Interactable");	
 }
 
 // Called when the game starts or when spawned
 void ACBMachine::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	GetWorldTimerManager().SetTimer(TimerHandle_DepletionTimer, this, &ACBMachine::Timer_ApplyDepletion, 1.f, true);
 }
 
 void ACBMachine::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -36,17 +37,18 @@ void ACBMachine::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& Out
 	DOREPLIFETIME(ACBMachine, bIsPowered);
 }
 
-// Called every frame
-void ACBMachine::Tick(float DeltaTime)
+void ACBMachine::Timer_ApplyDepletion()
 {
-	Super::Tick(DeltaTime);
-
-	if(!bIsPowered) return;	//No point checking further if its off
-
-	ChargeAmount -= FMath::Clamp(ChargeAmount-ChargeDrainSpeed, 0.f, 100.f);
+	ChargeAmount = FMath::Clamp(ChargeAmount-ChargeDrainSpeed, 0.f, MaxCharge);
 	if(ChargeAmount <= 0.f)
 	{
 		bIsPowered = false;
 	}
+}
+
+// Called every frame
+void ACBMachine::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
 }
 
