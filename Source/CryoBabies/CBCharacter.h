@@ -90,6 +90,8 @@ public:
 	void RequestSetupVOIPRPC(ACBCharacter* character);
 	UFUNCTION(NetMulticast, Reliable)
 	void SetupVOIPRPC(ACBCharacter* character);
+	
+	virtual void OnRep_PlayerState() override;
 
 	virtual void Tick(float DeltaTime) override;
 

@@ -85,7 +85,7 @@ void ACBCharacter::BeginPlay()
 	// VOIP
 	//if (GetPlayerState() /* && IsLocallyControlled()*/) SetupVOIP();
 
-	if (GetPlayerState() && IsLocallyControlled()) RequestSetupVOIPRPC(this);
+	//if (GetPlayerState() && IsLocallyControlled()) RequestSetupVOIPRPC(this);
 
 	OverlapSphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ACBCharacter::OnOverlapBegin);
 	OverlapSphereComponent->OnComponentEndOverlap.AddDynamic(this, &ACBCharacter::OnOverlapEnd);
@@ -196,6 +196,15 @@ void ACBCharacter::DeactivateInteract(const FInputActionValue& Value)
 	else
 	{
 		ServerInteractButtonReleased();
+	}
+}
+
+void ACBCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	if (IsLocallyControlled())
+	{
+		RequestSetupVOIPRPC(this);
 	}
 }
 
