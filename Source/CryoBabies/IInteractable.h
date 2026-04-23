@@ -6,6 +6,8 @@
 #include "UObject/Interface.h"
 #include "IInteractable.generated.h"
 
+class ACBCharacter;
+
 // This class does not need to be modified.
 UINTERFACE(Blueprintable)
 class UIInteractable : public UInterface
@@ -24,5 +26,5 @@ class CRYOBABIES_API IIInteractable
 public:
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
-	void Interact(bool bIsInteracting);
+	void Interact(ACBCharacter* Interactor, bool bIsInteracting);
 };

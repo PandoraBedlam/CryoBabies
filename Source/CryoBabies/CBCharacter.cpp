@@ -9,6 +9,7 @@
 #include "Components/SphereComponent.h"
 #include "Net/VoiceConfig.h"
 #include "Net/UnrealNetwork.h"
+#include "Engine/SkeletalMeshSocket.h"
 
 ACBCharacter::ACBCharacter()
 {
@@ -66,6 +67,55 @@ void ACBCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 	DOREPLIFETIME(ACBCharacter, bIsCrouching);
 	DOREPLIFETIME(ACBCharacter, bIsInteracting);
+}
+
+void ACBCharacter::TryPickUp(AActor* Pickup, bool bForce)
+{
+	// Check current pickup
+	if (m_HeldPickup)
+	{
+		if (bForce) DropPickupRPC();
+		else return;
+	}
+
+	PickUpRPC(Pickup);
+}
+
+void ACBCharacter::PickUpRPC_Implementation(AActor* Pickup)
+{
+	m_HeldPickup = Pickup;
+
+	// Disable physics on the pickup
+	m_HeldPickup->SetActorEnableCollision(false);
+	if (UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(m_HeldPickup->GetRootComponent()))
+	{
+		RootPrimitive->SetSimulatePhysics(false);
+	}
+
+	// Attach pickup
+	bool bAttached = m_HeldPickup->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("PickupSocket"));
+}
+
+void ACBCharacter::DropPickup()
+{
+	DropPickupRPC();
+}
+
+void ACBCharacter::DropPickupRPC_Implementation()
+{
+	if (!m_HeldPickup) return;
+
+	// Enable physics on the pickup
+	m_HeldPickup->SetActorEnableCollision(true);
+	if (UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(m_HeldPickup->GetRootComponent()))
+	{
+		RootPrimitive->SetSimulatePhysics(true);
+	}
+
+	// Detach pickup
+	m_HeldPickup->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+	m_HeldPickup = nullptr;
 }
 
 void ACBCharacter::BeginPlay()
@@ -172,7 +222,7 @@ void ACBCharacter::ActivateInteract(const FInputActionValue& Value)
 		if (m_OverlappedInteractable
 			&& m_OverlappedInteractable->GetClass()->ImplementsInterface(UIInteractable::StaticClass()))
 		{
-			IIInteractable::Execute_Interact(m_OverlappedInteractable, true);
+			IIInteractable::Execute_Interact(m_OverlappedInteractable, this, true);
 		}
 	}
 	else
@@ -190,7 +240,7 @@ void ACBCharacter::DeactivateInteract(const FInputActionValue& Value)
 		if (m_OverlappedInteractable
 			&& m_OverlappedInteractable->GetClass()->ImplementsInterface(UIInteractable::StaticClass()))
 		{
-			IIInteractable::Execute_Interact(m_OverlappedInteractable, false);
+			IIInteractable::Execute_Interact(m_OverlappedInteractable, this, false);
 		}
 	}
 	else
@@ -204,7 +254,7 @@ void ACBCharacter::ServerInteractButtonPressed_Implementation()
 	if (m_OverlappedInteractable
 		&& m_OverlappedInteractable->GetClass()->ImplementsInterface(UIInteractable::StaticClass()))
 	{
-		IIInteractable::Execute_Interact(m_OverlappedInteractable, true);
+		IIInteractable::Execute_Interact(m_OverlappedInteractable, this, true);
 	}
 }
 
@@ -213,7 +263,7 @@ void ACBCharacter::ServerInteractButtonReleased_Implementation()
 	if (m_OverlappedInteractable
 			&& m_OverlappedInteractable->GetClass()->ImplementsInterface(UIInteractable::StaticClass()))
 	{
-		IIInteractable::Execute_Interact(m_OverlappedInteractable, false);
+		IIInteractable::Execute_Interact(m_OverlappedInteractable, this, false);
 	}
 }
 

@@ -4,6 +4,7 @@
 #include "CBMachine.h"
 
 #include "Net/UnrealNetwork.h"
+#include "CBBattery.h"
 
 
 // Sets default values
@@ -35,6 +36,73 @@ void ACBMachine::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& Out
 	DOREPLIFETIME_CONDITION(ACBMachine, MaxCharge, COND_InitialOnly);
 	DOREPLIFETIME(ACBMachine, ChargeDrainSpeed);
 	DOREPLIFETIME(ACBMachine, bIsPowered);
+}
+
+void ACBMachine::AddBattery(ACBBattery* Battery, bool bForce)
+{
+	if (InsertedBatteries.Num() >= MaxBatteryCount)
+	{
+		if (bForce) RemoveBatteryRPC();
+		else return;
+	}
+
+	AddBatteryRPC(Battery);
+}
+
+void ACBMachine::AddBatteryRPC_Implementation(ACBBattery* Battery)
+{
+	USkeletalMeshComponent* Mesh = GetComponentByClass<USkeletalMeshComponent>();
+
+	if(!Mesh)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Mesh component not found on machine"));
+		return;
+	}
+
+	FName NextSocketName = FName(*FString::Printf(TEXT("BatterySocket%d"), InsertedBatteries.Num()));
+
+	if (!Mesh->DoesSocketExist(NextSocketName))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Socket 'BatterySocket%d' does not exist on mesh"), InsertedBatteries.Num());
+		return;
+	}
+
+	InsertedBatteries.Add(Battery);
+
+	// Disable physics on the pickup
+	Battery->SetActorEnableCollision(false);
+	if (UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(Battery->GetRootComponent()))
+	{
+		RootPrimitive->SetSimulatePhysics(false);
+	}
+
+	// Attach pickup
+	bool bAttached = Battery->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, NextSocketName);
+}
+
+void ACBMachine::RemoveBattery()
+{
+	RemoveBatteryRPC();
+}
+
+void ACBMachine::RemoveBatteryRPC_Implementation()
+{
+	if (InsertedBatteries.Num() <= 0) return;
+
+	int LastIndex = InsertedBatteries.Num() - 1;
+	ACBBattery* BatteryToRemove = InsertedBatteries[LastIndex];
+
+	// Enable physics on the pickup
+	BatteryToRemove->SetActorEnableCollision(true);
+	if (UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(BatteryToRemove->GetRootComponent()))
+	{
+		RootPrimitive->SetSimulatePhysics(true);
+	}
+
+	// Detach pickup
+	BatteryToRemove->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+	InsertedBatteries.RemoveAt(LastIndex);
 }
 
 void ACBMachine::Timer_ApplyDepletion()

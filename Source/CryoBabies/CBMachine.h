@@ -7,6 +7,8 @@
 #include "GameFramework/Actor.h"
 #include "CBMachine.generated.h"
 
+class ACBBattery;
+
 UCLASS()
 class CRYOBABIES_API ACBMachine : public AActor, public IIInteractable
 {
@@ -35,17 +37,33 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Replicated, Category = "Machine | Properties")
 	bool bIsPowered = false;
 
+	//How many batteries can be attached
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Replicated, Category = "Machine | Properties")
+	int MaxBatteryCount = 1;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	FTimerHandle TimerHandle_DepletionTimer;
 
+	TArray<ACBBattery*> InsertedBatteries;
+
 	void Timer_ApplyDepletion();
 
 public:
+	UFUNCTION(NetMulticast, Reliable)
+	void AddBatteryRPC(ACBBattery* Battery);
+	UFUNCTION(NetMulticast, Reliable)
+	void RemoveBatteryRPC();
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION(BlueprintCallable)
+	void AddBattery(ACBBattery* Battery, bool bForce = false);
+	UFUNCTION(BlueprintCallable)
+	void RemoveBattery();
 };
