@@ -58,6 +58,7 @@ void ACBCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACBCharacter::Jump);
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ACBCharacter::ActivateInteract);
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ACBCharacter::DeactivateInteract);
+		EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Triggered, this, &ACBCharacter::DropPickup);
 	}
 }
 

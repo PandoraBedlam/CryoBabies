@@ -43,6 +43,8 @@ protected:
 	UInputAction* JumpAction;
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	UInputAction* InteractAction;
+	UPROPERTY(EditDefaultsOnly, Category = Input)
+	UInputAction* DropAction;
 
 	UPROPERTY(EditDefaultsOnly, Category = Movement)
 	float WalkSpeed = 400.0f;
@@ -78,6 +80,7 @@ private:
 	void DeactivateCrouch(const FInputActionValue& Value);
 	void ActivateInteract(const FInputActionValue& Value);
 	void DeactivateInteract(const FInputActionValue& Value);
+	void Drop(const FInputActionValue& Value);
 
 	UFUNCTION(Server, Reliable)
 	void ServerInteractButtonPressed();
