@@ -82,6 +82,9 @@ private:
 	void DeactivateInteract(const FInputActionValue& Value);
 	void Drop(const FInputActionValue& Value);
 
+	void SetCrouching(bool bCrouching);
+	void SetInteracting(bool bInteracting);
+
 	UFUNCTION(Server, Reliable)
 	void ServerInteractButtonPressed();
 
@@ -96,6 +99,11 @@ public:
 	void RequestSetupVOIPRPC(ACBCharacter* character);
 	UFUNCTION(NetMulticast, Reliable)
 	void SetupVOIPRPC(ACBCharacter* character);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetCrouching(bool bCrouching);
+	UFUNCTION(Server, Reliable)
+	void ServerSetInteracting(bool bInteracting);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void PickUpRPC(AActor* Pickup);

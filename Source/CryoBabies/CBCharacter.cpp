@@ -29,6 +29,40 @@ ACBCharacter::ACBCharacter()
 	//VOIPTalker->SetIsReplicated(true);
 }
 
+void ACBCharacter::SetCrouching(bool bCrouching)
+{
+	if (HasAuthority())
+	{
+		bIsCrouching = bCrouching;
+	}
+	else
+	{
+		ServerSetCrouching(bCrouching);
+	}
+}
+
+void ACBCharacter::ServerSetCrouching_Implementation(bool bCrouching)
+{
+	bIsCrouching = bCrouching;
+}
+
+void ACBCharacter::SetInteracting(bool bInteracting)
+{
+	if (HasAuthority())
+	{
+		bIsInteracting = bInteracting;
+	}
+	else
+	{
+		ServerSetInteracting(bInteracting);
+	}
+}
+
+void ACBCharacter::ServerSetInteracting_Implementation(bool bInteracting)
+{
+	bIsInteracting = bInteracting;
+}
+
 void ACBCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -182,7 +216,7 @@ void ACBCharacter::Move(const FInputActionValue& Value)
 void ACBCharacter::ActivateSprint(const FInputActionValue& Value)
 {
 	UnCrouch(true);
-	bIsCrouching = false;
+	SetCrouching(false);
 
 	bIsSprinting = true;
 	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
@@ -199,7 +233,7 @@ void ACBCharacter::ActivateCrouch(const FInputActionValue& Value)
 	bIsSprinting = false;
 
 	Crouch(true);
-	bIsCrouching = true;
+	SetCrouching(true);
 	GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
 
 	CameraComponent->AddRelativeLocation(CameraOffsetCrouching);
@@ -208,7 +242,7 @@ void ACBCharacter::ActivateCrouch(const FInputActionValue& Value)
 void ACBCharacter::DeactivateCrouch(const FInputActionValue& Value)
 {
 	UnCrouch(true);
-	bIsCrouching = false;
+	SetCrouching(false);
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 
 	CameraComponent->AddRelativeLocation(-CameraOffsetCrouching);
@@ -216,7 +250,7 @@ void ACBCharacter::DeactivateCrouch(const FInputActionValue& Value)
 
 void ACBCharacter::ActivateInteract(const FInputActionValue& Value)
 {
-	bIsInteracting = true;
+	SetInteracting(true);
 
 	if(HasAuthority())
 	{
@@ -234,7 +268,7 @@ void ACBCharacter::ActivateInteract(const FInputActionValue& Value)
 
 void ACBCharacter::DeactivateInteract(const FInputActionValue& Value)
 {
-	bIsInteracting = false;
+	SetInteracting(false);
 
 	if(HasAuthority())
 	{
