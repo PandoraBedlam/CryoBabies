@@ -28,6 +28,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	virtual void OnRep_PlayerState() override;
+
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	UInputMappingContext* DefaultInputMapping;
 
@@ -92,13 +94,13 @@ private:
 	void ServerInteractButtonReleased();
 
 	// Voice Chat
-	//void SetupVOIP();
+	void SetupVOIP();
 
 public:
-	UFUNCTION(Server, Reliable)
+	/*UFUNCTION(Server, Reliable)
 	void RequestSetupVOIPRPC(ACBCharacter* character);
 	UFUNCTION(NetMulticast, Reliable)
-	void SetupVOIPRPC(ACBCharacter* character);
+	void SetupVOIPRPC(ACBCharacter* character);*/
 
 	UFUNCTION(Server, Reliable)
 	void ServerSetCrouching(bool bCrouching);

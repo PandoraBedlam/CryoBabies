@@ -170,10 +170,17 @@ void ACBCharacter::BeginPlay()
 	// VOIP
 	//if (GetPlayerState() /* && IsLocallyControlled()*/) SetupVOIP();
 
-	if (GetPlayerState() && IsLocallyControlled()) RequestSetupVOIPRPC(this);
+	//if (GetPlayerState() && IsLocallyControlled()) RequestSetupVOIPRPC(this);
 
 	OverlapSphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ACBCharacter::OnOverlapBegin);
 	OverlapSphereComponent->OnComponentEndOverlap.AddDynamic(this, &ACBCharacter::OnOverlapEnd);
+}
+
+void ACBCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	if (!IsLocallyControlled()) SetupVOIP();
 }
 
 void ACBCharacter::OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
@@ -302,69 +309,59 @@ void ACBCharacter::ServerInteractButtonReleased_Implementation()
 	}
 }
 
-void ACBCharacter::RequestSetupVOIPRPC_Implementation(ACBCharacter* character)
-{
-	SetupVOIPRPC(character);
-}
+//void ACBCharacter::RequestSetupVOIPRPC_Implementation(ACBCharacter* character)
+//{
+//	SetupVOIPRPC(character);
+//}
+//
+//void ACBCharacter::SetupVOIPRPC_Implementation(ACBCharacter* character)
+//{
+//	APlayerState* player = character->GetPlayerState();
+//
+//	UVOIPTalker* VOIPTalker = UVOIPTalker::CreateTalkerForPlayer(player);
+//
+//	if (VOIPTalker)
+//	{
+//		VOIPTalker->RegisterWithPlayerState(player);
+//
+//		VOIPTalker->Settings.ComponentToAttachTo = character->GetRootComponent();
+//
+//		USoundAttenuation* ClientAttenuationSettings = character->GetAttenuationSettings();
+//		if (ClientAttenuationSettings)
+//		{
+//			VOIPTalker->Settings.AttenuationSettings = ClientAttenuationSettings;
+//		}
+//
+//		USoundEffectSourcePresetChain* ClientSourceEffectChain = character->GetSourceEffectChain();
+//		if (ClientSourceEffectChain)
+//		{
+//			VOIPTalker->Settings.SourceEffectChain = ClientSourceEffectChain;
+//		}
+//	}
+//}
 
-void ACBCharacter::SetupVOIPRPC_Implementation(ACBCharacter* character)
+void ACBCharacter::SetupVOIP()
 {
-	APlayerState* player = character->GetPlayerState();
+	APlayerState* player = GetPlayerState();
+
+	if (!player) return;
 
 	UVOIPTalker* VOIPTalker = UVOIPTalker::CreateTalkerForPlayer(player);
 
 	if (VOIPTalker)
 	{
+		VOIPTalker->Settings.ComponentToAttachTo = GetRootComponent();
+
+		if (AttenuationSettings)
+		{
+			VOIPTalker->Settings.AttenuationSettings = AttenuationSettings;
+		}
+
+		if (SourceEffectChain)
+		{
+			VOIPTalker->Settings.SourceEffectChain = SourceEffectChain;
+		}
+
 		VOIPTalker->RegisterWithPlayerState(player);
-
-		VOIPTalker->Settings.ComponentToAttachTo = character->GetRootComponent();
-
-		USoundAttenuation* ClientAttenuationSettings = character->GetAttenuationSettings();
-		if (ClientAttenuationSettings)
-		{
-			VOIPTalker->Settings.AttenuationSettings = ClientAttenuationSettings;
-		}
-
-		USoundEffectSourcePresetChain* ClientSourceEffectChain = character->GetSourceEffectChain();
-		if (ClientSourceEffectChain)
-		{
-			VOIPTalker->Settings.SourceEffectChain = ClientSourceEffectChain;
-		}
 	}
 }
-
-//void ACBCharacter::SetupVOIP()
-//{
-//	APlayerState* LocalPlayerState = GetPlayerState();
-//
-//	//VOIPTalker = UVOIPTalker::CreateTalkerForPlayer(LocalPlayerState);
-//
-//	if (VOIPTalker)
-//	{
-//		VOIPTalker->RegisterWithPlayerState(LocalPlayerState);
-//	}
-//
-//	FVoiceSettings VoiceSettings;
-//
-//	if (AttenuationSettings) VoiceSettings.AttenuationSettings = AttenuationSettings;
-//	if (SourceEffectChain) VoiceSettings.SourceEffectChain = SourceEffectChain;
-//	VoiceSettings.ComponentToAttachTo = RootComponent;
-//
-//	VOIPTalker->Settings = VoiceSettings;
-//}
-
-//void ACBCharacter::SetupVOIP()
-//{
-//	APlayerState* LocalPlayerState = GetPlayerState();
-//
-//	VOIPTalker = UVOIPTalker::CreateTalkerForPlayer(LocalPlayerState);
-//
-//	if (VOIPTalker)
-//	{
-//		if (AttenuationSettings) VOIPTalker->Settings.AttenuationSettings = AttenuationSettings;
-//		if (SourceEffectChain) VOIPTalker->Settings.SourceEffectChain = SourceEffectChain;
-//		VOIPTalker->Settings.ComponentToAttachTo = RootComponent;
-//
-//		VOIPTalker->RegisterWithPlayerState(LocalPlayerState);
-//	}
-//}
