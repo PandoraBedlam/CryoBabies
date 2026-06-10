@@ -13,9 +13,6 @@ class CRYOBABIES_API ACBCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditDefaultsOnly, Category="Camera")
-	class UCameraComponent* CameraComponent;
-
 	UPROPERTY(EditDefaultsOnly, Category="Properties")
 	class USphereComponent* OverlapSphereComponent;
 
@@ -29,6 +26,9 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void OnRep_PlayerState() override;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
+	class UCameraComponent* CameraComponent;
 
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	UInputMappingContext* DefaultInputMapping;

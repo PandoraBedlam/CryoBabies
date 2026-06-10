@@ -180,7 +180,7 @@ void ACBCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
-	if (!IsLocallyControlled()) SetupVOIP();
+	// if (!IsLocallyControlled()) SetupVOIP();
 }
 
 void ACBCharacter::OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
