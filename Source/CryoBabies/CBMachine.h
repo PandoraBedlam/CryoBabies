@@ -47,6 +47,7 @@ protected:
 
 	FTimerHandle TimerHandle_DepletionTimer;
 
+	UPROPERTY(BlueprintReadOnly)
 	TArray<ACBBattery*> InsertedBatteries;
 
 	void Timer_ApplyDepletion();

@@ -15,7 +15,7 @@ public:
 	// Sets default values for this actor's properties
 	ACBBattery();
 
-	UPROPERTY(EditDefaultsOnly, Category="Battery|Visuals")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Battery|Visuals")
 	UStaticMeshComponent* MeshComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Replicated, Category="Battery|Properties")
