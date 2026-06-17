@@ -108,15 +108,26 @@ void ACBMachine::RemoveBatteryRPC_Implementation()
 void ACBMachine::Timer_ApplyDepletion()
 {
 	ChargeAmount = FMath::Clamp(ChargeAmount-ChargeDrainSpeed, 0.f, MaxCharge);
-	if(ChargeAmount <= 0.f)
-	{
-		bIsPowered = false;
-	}
+	//if (ChargeAmount <= 0.f)
+	//{
+	//	bIsPowered = false;
+	//}
 }
 
 // Called every frame
 void ACBMachine::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (ChargeAmount <= 0.0f)
+	{
+		if (bIsPowered) OnPoweredChanged.Broadcast(false);
+        bIsPowered = false;
+	}
+	else
+	{
+		if (!bIsPowered) OnPoweredChanged.Broadcast(true);
+		bIsPowered = true;
+	}
 }
 
