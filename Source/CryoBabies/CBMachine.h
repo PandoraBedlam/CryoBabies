@@ -9,6 +9,8 @@
 
 class ACBBattery;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPoweredChanged, bool, bIsPowered);
+
 UCLASS()
 class CRYOBABIES_API ACBMachine : public AActor, public IIInteractable
 {
@@ -17,6 +19,9 @@ class CRYOBABIES_API ACBMachine : public AActor, public IIInteractable
 public:
 	// Sets default values for this actor's properties
 	ACBMachine();
+
+	UPROPERTY(BlueprintAssignable)
+	FOnPoweredChanged OnPoweredChanged;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Machine | Visuals")
 	USkeletalMeshComponent* MeshComp;
